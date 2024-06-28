@@ -18,6 +18,9 @@ router = Router()
 # Создание состояний
 class BookingState(StatesGroup):
     service = State()
+    back = State()
+    info = State()
+    info_1 = State()
     master = State()
     data = State()
     time = State()
@@ -41,15 +44,15 @@ async def process_help_command(message: Message):
 # и отправлять пользователю сообщение со списком доступных команд в боте
 @router.message(Command(commands='sign_up'))
 async def process_sign_up_command(message: Message):
-    await message.answer(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back'))    
+    await message.answer(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))    
 
 # Этот хэндлер будет срабатывать на команду "/price"
 # и отправлять пользователю сообщение со списком доступных команд в боте
 @router.message(Command(commands='price'))
 async def process_price_command(message: Message):
-    await message.answer(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back'))  
+    await message.answer(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'back'))  
 
-# Этот хэндлер будет срабатывать на команду "/price"
+# Этот хэндлер будет срабатывать на команду "/promotions"
 # и отправлять пользователю сообщение со списком доступных команд в боте
 @router.message(Command(commands='promotions'))
 async def process_promotions_command(message: Message):
@@ -67,20 +70,65 @@ async def main_menu(callback_query: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == 'book_service')
 async def book_service(callback_query: CallbackQuery, state: FSMContext):
-    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back'))
+    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'Маникюр', 'Педикюр', 'Комплекс', 'back'))
     await state.set_state(BookingState.service)
+        
 
 @router.callback_query(StateFilter(BookingState.service))
-async def choose_service(callback_query: CallbackQuery, state: FSMContext):
-    await state.update_data(service=callback_query.data)
-    await callback_query.message.edit_text("Выберите мастера:", reply_markup=create_inline_kb(1, 'master_1', 'master_2'))
-    await state.set_state(BookingState.master)
+async def m_list(callback_query: CallbackQuery, state: FSMContext): 
+    if callback_query.data == 'back':
+                # Возвращаемся к BookingState.service, сохраняя информацию 
+        await state.update_data(service='back')
+        await state.set_state(BookingState.service)
+        # Возвращаемся к BookingState.service
+        await callback_query.message.edit_text(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))
+        return  
+    await state.update_data(service=callback_query.data) 
+    await callback_query.message.edit_text(text=LEXICON['m_text'], reply_markup=create_inline_kb(1, 'Снятие гель-лака', 'Без снятия', 'back'))
+    await state.set_state(BookingState.info)
+
+
+@router.callback_query(StateFilter(BookingState.info))
+async def yes_list(callback_query: CallbackQuery, state: FSMContext):
+    if callback_query.data == 'back':
+                # Возвращаемся к BookingState.service, сохраняя информацию 
+        await state.update_data(service='back')
+        await state.set_state(BookingState.service)
+        # Возвращаемся к BookingState.service
+        await callback_query.message.edit_text(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))
+        return 
+    await state.update_data(info=callback_query.data)
+    await callback_query.message.edit_text(text=LEXICON['m_text_2'], reply_markup=create_inline_kb(1, 'Покрытие', 'Без покрытия', 'back'))
+    await state.set_state(BookingState.info_1)
+
+
+@router.callback_query(StateFilter(BookingState.info_1))
+async def yes_list(callback_query: CallbackQuery, state: FSMContext):
+    if callback_query.data == 'back':
+                # Возвращаемся к BookingState.service, сохраняя информацию 
+        await state.update_data(service='back')
+        await state.set_state(BookingState.service)
+        # Возвращаемся к BookingState.service
+        await callback_query.message.edit_text(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))
+        return 
+    await state.update_data(info_1=callback_query.data)
+    await callback_query.message.edit_text(text=LEXICON['m_text_3'], reply_markup=create_inline_kb(1, 'Мастер маникюря и педикюра_1', 'Мастер маникюря и педикюра_2', 'back'))
+    await state.set_state(BookingState.master)    
+
 
 @router.callback_query(StateFilter(BookingState.master))
 async def choose_master(callback_query: CallbackQuery, state: FSMContext):
+    if callback_query.data == 'back':
+                # Возвращаемся к BookingState.service, сохраняя информацию 
+        await state.update_data(service='back')
+        await state.set_state(BookingState.service)
+        # Возвращаемся к BookingState.service
+        await callback_query.message.edit_text(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))
+        return 
     await state.update_data(master=callback_query.data)
-    await callback_query.message.answer("📅Выберите дату удобную дла Вас:", reply_markup=await SimpleCalendar(locale=await get_user_locale(callback_query.from_user)).start_calendar())
+    await callback_query.message.edit_text("📅Выберите дату удобную дла Вас:", reply_markup=await SimpleCalendar(locale=await get_user_locale(callback_query.from_user)).start_calendar())
     await state.set_state(BookingState.data)
+
 
 @router.callback_query(SimpleCalendarCallback.filter(), StateFilter(BookingState.data))
 async def process_simple_calendar(callback_query: CallbackQuery, callback_data: CallbackData, state: FSMContext):
@@ -91,56 +139,42 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
         await callback_query.message.answer(f"Вы выбрали {date.strftime('%d/%m/%Y')}. Теперь выберите время:", reply_markup=time_selection_keyboard())
         await state.set_state(BookingState.time)
 
+
 @router.callback_query( StateFilter(BookingState.time)) # Обработчик выбора времени
 async def choose_time(callback_query: CallbackQuery, state: FSMContext):
     await state.update_data(time=callback_query.data)
         # Получите данные записи из user_data
     user_data = await state.get_data()
     service = user_data['service']
+    info = user_data['info']
+    info_1 = user_data['info_1']
     master = user_data['master']
     date = user_data['date']
     time = callback_query.data.split('_')[1]
-    await callback_query.message.answer(f"Вы записаны на {service} к {master} на {date} в {time}.")
+    await callback_query.message.answer(f"Спасибо!👍 Вы записаны на услуги: \n{info}\n {info_1}\n {service}\n {master}\n на {date} в {time}.{LEXICON['finish']}")
     await state.clear()  
+
 
 @router.callback_query(lambda c: c.data == '/price')
 async def price_list(callback_query: CallbackQuery):
-    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back'))
-
-@router.callback_query(lambda c: c.data == 'M')
-async def price_list(callback_query: CallbackQuery):
-    await callback_query.message.edit_text(text=LEXICON['m_text'], reply_markup=create_inline_kb(1, 'YES', 'NO', 'back'))
-
-@router.callback_query(lambda c: c.data == 'P')
-async def price_list(callback_query: CallbackQuery):
-    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back')) 
-
-@router.callback_query(lambda c: c.data == 'K')
-async def price_list(callback_query: CallbackQuery):
-    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'M', 'P', 'K', 'back'))       
+    await callback_query.message.edit_text(text=LEXICON['price_list'], reply_markup=create_inline_kb(1, 'back'))
 
 
 @router.callback_query(lambda c: c.data == 'promotions_2')
 async def promotions(callback_query: CallbackQuery):
     await callback_query.message.edit_text(text=LEXICON['promotions_1'], reply_markup=create_inline_kb(1, 'back'))
 
+
 @router.callback_query(lambda c: c.data == 'back')
-async def promotions(callback_query: CallbackQuery):
+async def back(callback_query: CallbackQuery):
     await callback_query.message.edit_text(text=LEXICON['main_menu'], reply_markup=create_inline_kb(1, 'book_service', '/price', 'promotions_2', 'contacts'))    
 
-@router.callback_query(lambda c: c.data == 'contacts')
-async def contacts(callback_query: CallbackQuery):
-    await callback_query.message.edit_text("Контакты:", reply_markup=create_inline_kb(1, 'phone', 'address', 'website', 'instagram'))
 
 @router.callback_query(lambda c: c.data == 'contacts')
 async def contacts(callback_query: CallbackQuery):
-    await callback_query.message.edit_text("Контакты:", reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Телефон салона", callback_data="phone")],
-        [InlineKeyboardButton(text="Адрес салона", callback_data="address")],
-        [InlineKeyboardButton(text="Сайт", callback_data="website")],
-        [InlineKeyboardButton(text="Instagram", callback_data="instagram")],
-        [InlineKeyboardButton(text="Назад", callback_data="main_menu")]
-    ]))
+    await callback_query.message.edit_text("Контакты:", reply_markup=create_inline_kb(1, 'phone', 'address', 'website', 'instagram', 'back'))
+
+
 
 #router.callback_query(lambda c: c.data in ['phone', 'address', 'website', 'instagram'])
 #async def contact_info(callback_query: CallbackQuery):

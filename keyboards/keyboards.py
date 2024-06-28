@@ -50,7 +50,9 @@ from lexicon.lexicon import LEXICON
 def time_selection_keyboard():
     buttons = [
         [InlineKeyboardButton(text="10:00", callback_data="time_10:00")],
+        [InlineKeyboardButton(text="12:00", callback_data="time_12:00")],
         [InlineKeyboardButton(text="14:00", callback_data="time_14:00")],
+        [InlineKeyboardButton(text="16:00", callback_data="time_16:00")],
         [InlineKeyboardButton(text="Назад", callback_data="choose_master")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
